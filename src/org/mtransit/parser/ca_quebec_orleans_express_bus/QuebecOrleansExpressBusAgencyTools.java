@@ -9,14 +9,13 @@ import org.mtransit.parser.gtfs.data.GCalendar;
 import org.mtransit.parser.gtfs.data.GCalendarDate;
 import org.mtransit.parser.gtfs.data.GRoute;
 import org.mtransit.parser.gtfs.data.GTrip;
+import org.mtransit.parser.mt.data.MAgency;
 import org.mtransit.parser.mt.data.MRoute;
 import org.mtransit.parser.mt.data.MSpec;
 import org.mtransit.parser.mt.data.MTrip;
 
 // http://gtfs.keolis.ca/gtfs.zip
 public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
-
-	public static final String ROUTE_TYPE_FILTER = "3"; // bus only
 
 	public static void main(String[] args) {
 		if (args == null || args.length == 0) {
@@ -64,11 +63,8 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 	}
 
 	@Override
-	public boolean excludeRoute(GRoute gRoute) {
-		if (ROUTE_TYPE_FILTER != null && !gRoute.route_type.equals(ROUTE_TYPE_FILTER)) {
-			return true;
-		}
-		return super.excludeRoute(gRoute);
+	public Integer getAgencyRouteType() {
+		return MAgency.ROUTE_TYPE_BUS;
 	}
 
 	@Override
