@@ -79,7 +79,23 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 	@Override
 	public String getRouteShortName(GRoute gRoute) {
 		if (StringUtils.isEmpty(gRoute.route_short_name)) {
-			return "ORL EXP"; // TODO better route short names
+			if ("2".equals(gRoute.route_id)) {
+				return "MT YUL"; // Montréal - Aéroport Montréal-Trudeau
+			} else if ("4".equals(gRoute.route_id)) {
+				return "MT QC S"; // Montréal - Québec ( Rive-sud, Express )
+			} else if ("6".equals(gRoute.route_id)) {
+				return "MT QC N"; // Montréal - Trois-Rivières - Québec ( Rive Nord )
+			} else if ("8".equals(gRoute.route_id)) {
+				return "RK GS N"; // Rimouski - Matane - Gaspé ( Gaspésie Nord )
+			} else if ("9".equals(gRoute.route_id)) {
+				return "RK GR S"; // Rimouski - Grande-Rivière (Gaspésie Sud)
+			} else if ("11".equals(gRoute.route_id)) {
+				return "VT MT"; // Victoriaville - Montréal
+			} else if ("122".equals(gRoute.route_id)) {
+				return "MT RK E"; // 'Montréal - Rimouski (Express)
+			} else if ("123".equals(gRoute.route_id)) {
+				return "QC RK"; // Québec - Rimouski (Bas-St-Laurent)
+			}
 		}
 		return super.getRouteShortName(gRoute);
 	}
