@@ -231,4 +231,8 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 		return MSpec.cleanLabelFR(tripHeadsign);
 	}
 
+	@Override
+	public String cleanStopName(String gStopName) {
+		return super.cleanStopNameFR(gStopName);
+	}
 }
