@@ -12,7 +12,7 @@ import org.mtransit.parser.gtfs.data.GSpec;
 import org.mtransit.parser.gtfs.data.GTrip;
 import org.mtransit.parser.mt.data.MAgency;
 import org.mtransit.parser.mt.data.MRoute;
-import org.mtransit.parser.mt.data.MSpec;
+import org.mtransit.parser.CleanUtils;
 import org.mtransit.parser.mt.data.MTrip;
 
 // http://gtfs.keolis.ca/gtfs.zip
@@ -32,11 +32,11 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 
 	@Override
 	public void start(String[] args) {
-		System.out.printf("Generating Orleans Express bus data...\n");
+		System.out.printf("\nGenerating Orleans Express bus data...\n");
 		long start = System.currentTimeMillis();
 		this.serviceIds = extractUsefulServiceIds(args, this);
 		super.start(args);
-		System.out.printf("Generating Orleans Express bus data... DONE in %s.\n", Utils.getPrettyDuration(System.currentTimeMillis() - start));
+		System.out.printf("\nGenerating Orleans Express bus data... DONE in %s.\n", Utils.getPrettyDuration(System.currentTimeMillis() - start));
 	}
 
 	@Override
@@ -71,10 +71,10 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 	@Override
 	public String getRouteLongName(GRoute gRoute) {
 		String routeLongName = gRoute.route_long_name;
-		routeLongName = MSpec.SAINT.matcher(routeLongName).replaceAll(MSpec.SAINT_REPLACEMENT);
-		routeLongName = MSpec.CLEAN_PARENTHESE1.matcher(routeLongName).replaceAll(MSpec.CLEAN_PARENTHESE1_REPLACEMENT);
-		routeLongName = MSpec.CLEAN_PARENTHESE2.matcher(routeLongName).replaceAll(MSpec.CLEAN_PARENTHESE2_REPLACEMENT);
-		return MSpec.cleanLabel(routeLongName);
+		routeLongName = CleanUtils.SAINT.matcher(routeLongName).replaceAll(CleanUtils.SAINT_REPLACEMENT);
+		routeLongName = CleanUtils.CLEAN_PARENTHESE1.matcher(routeLongName).replaceAll(CleanUtils.CLEAN_PARENTHESE1_REPLACEMENT);
+		routeLongName = CleanUtils.CLEAN_PARENTHESE2.matcher(routeLongName).replaceAll(CleanUtils.CLEAN_PARENTHESE2_REPLACEMENT);
+		return CleanUtils.cleanLabel(routeLongName);
 	}
 
 	private static final String RID_123 = "123";
@@ -228,7 +228,7 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 
 	@Override
 	public String cleanTripHeadsign(String tripHeadsign) {
-		return MSpec.cleanLabelFR(tripHeadsign);
+		return CleanUtils.cleanLabelFR(tripHeadsign);
 	}
 
 	@Override
