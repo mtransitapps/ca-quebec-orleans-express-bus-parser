@@ -70,7 +70,7 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 
 	@Override
 	public String getRouteLongName(GRoute gRoute) {
-		String routeLongName = gRoute.route_long_name;
+		String routeLongName = gRoute.getRouteLongName();
 		routeLongName = CleanUtils.SAINT.matcher(routeLongName).replaceAll(CleanUtils.SAINT_REPLACEMENT);
 		routeLongName = CleanUtils.CLEAN_PARENTHESE1.matcher(routeLongName).replaceAll(CleanUtils.CLEAN_PARENTHESE1_REPLACEMENT);
 		routeLongName = CleanUtils.CLEAN_PARENTHESE2.matcher(routeLongName).replaceAll(CleanUtils.CLEAN_PARENTHESE2_REPLACEMENT);
@@ -97,22 +97,22 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 
 	@Override
 	public String getRouteShortName(GRoute gRoute) {
-		if (StringUtils.isEmpty(gRoute.route_short_name)) {
-			if (RID_2.equals(gRoute.route_id)) {
+		if (StringUtils.isEmpty(gRoute.getRouteShortName())) {
+			if (RID_2.equals(gRoute.getRouteId())) {
 				return RSN_2; // Montréal - Aéroport Montréal-Trudeau
-			} else if (RID_4.equals(gRoute.route_id)) {
+			} else if (RID_4.equals(gRoute.getRouteId())) {
 				return RSN_4; // Montréal - Québec ( Rive-sud, Express )
-			} else if (RID_6.equals(gRoute.route_id)) {
+			} else if (RID_6.equals(gRoute.getRouteId())) {
 				return RSN_6; // Montréal - Trois-Rivières - Québec ( Rive Nord )
-			} else if (RID_8.equals(gRoute.route_id)) {
+			} else if (RID_8.equals(gRoute.getRouteId())) {
 				return RSN_8; // Rimouski - Matane - Gaspé ( Gaspésie Nord )
-			} else if (RID_9.equals(gRoute.route_id)) {
+			} else if (RID_9.equals(gRoute.getRouteId())) {
 				return RSN_9; // Rimouski - Grande-Rivière (Gaspésie Sud)
-			} else if (RID_11.equals(gRoute.route_id)) {
+			} else if (RID_11.equals(gRoute.getRouteId())) {
 				return RSN_11; // Victoriaville - Montréal
-			} else if (RID_122.equals(gRoute.route_id)) {
+			} else if (RID_122.equals(gRoute.getRouteId())) {
 				return RSN_122; // 'Montréal - Rimouski (Express)
-			} else if (RID_123.equals(gRoute.route_id)) {
+			} else if (RID_123.equals(gRoute.getRouteId())) {
 				return RSN_123; // Québec - Rimouski (Bas-St-Laurent)
 			}
 		}
@@ -134,14 +134,14 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 
 	@Override
 	public String getRouteColor(GRoute gRoute) {
-		if (RID_2.equals(gRoute.route_id)) return COLOR_2B80A5;
-		if (RID_4.equals(gRoute.route_id)) return COLOR_2B80A5;
-		if (RID_6.equals(gRoute.route_id)) return COLOR_EB6B24;
-		if (RID_8.equals(gRoute.route_id)) return COLOR_75B442;
-		if (RID_9.equals(gRoute.route_id)) return COLOR_75B442;
-		if (RID_11.equals(gRoute.route_id)) return COLOR_0F807C;
-		if (RID_122.equals(gRoute.route_id)) return COLOR_ED253F;
-		if (RID_123.equals(gRoute.route_id)) return COLOR_ED253F;
+		if (RID_2.equals(gRoute.getRouteId())) return COLOR_2B80A5;
+		if (RID_4.equals(gRoute.getRouteId())) return COLOR_2B80A5;
+		if (RID_6.equals(gRoute.getRouteId())) return COLOR_EB6B24;
+		if (RID_8.equals(gRoute.getRouteId())) return COLOR_75B442;
+		if (RID_9.equals(gRoute.getRouteId())) return COLOR_75B442;
+		if (RID_11.equals(gRoute.getRouteId())) return COLOR_0F807C;
+		if (RID_122.equals(gRoute.getRouteId())) return COLOR_ED253F;
+		if (RID_123.equals(gRoute.getRouteId())) return COLOR_ED253F;
 		return super.getRouteColor(gRoute);
 	}
 
@@ -157,12 +157,12 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 
 	@Override
 	public void setTripHeadsign(MRoute mRoute, MTrip mTrip, GTrip gTrip, GSpec gtfs) {
-		String stationName = cleanTripHeadsign(gTrip.trip_headsign);
+		String stationName = cleanTripHeadsign(gTrip.getTripHeadsign());
 		int directionId;
 		int routeId = Integer.parseInt(gTrip.getRouteId());
 		switch (routeId) {
 		case 2:
-			if (gTrip.trip_headsign.contains(TRUDEAU)) {
+			if (gTrip.getTripHeadsign().contains(TRUDEAU)) {
 				stationName = AÉROPORT_TRUDEAU;
 				directionId = OUTBOUND;
 			} else {
@@ -170,49 +170,49 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 			}
 			break;
 		case 4:
-			if (QUÉBEC.equals(gTrip.trip_headsign)) {
+			if (QUÉBEC.equals(gTrip.getTripHeadsign())) {
 				directionId = OUTBOUND;
 			} else {
 				directionId = INBOUND;
 			}
 			break;
 		case 6:
-			if (QUÉBEC.equals(gTrip.trip_headsign)) {
+			if (QUÉBEC.equals(gTrip.getTripHeadsign())) {
 				directionId = OUTBOUND;
 			} else {
 				directionId = INBOUND;
 			}
 			break;
 		case 8:
-			if (RIMOUSKI.equals(gTrip.trip_headsign)) {
+			if (RIMOUSKI.equals(gTrip.getTripHeadsign())) {
 				directionId = INBOUND;
 			} else {
 				directionId = OUTBOUND;
 			}
 			break;
 		case 9:
-			if (RIMOUSKI.equals(gTrip.trip_headsign)) {
+			if (RIMOUSKI.equals(gTrip.getTripHeadsign())) {
 				directionId = INBOUND;
 			} else {
 				directionId = OUTBOUND;
 			}
 			break;
 		case 11:
-			if (MONTRÉAL.equals(gTrip.trip_headsign)) {
+			if (MONTRÉAL.equals(gTrip.getTripHeadsign())) {
 				directionId = INBOUND;
 			} else {
 				directionId = OUTBOUND;
 			}
 			break;
 		case 122:
-			if (MONTRÉAL.equals(gTrip.trip_headsign)) {
+			if (MONTRÉAL.equals(gTrip.getTripHeadsign())) {
 				directionId = INBOUND;
 			} else {
 				directionId = OUTBOUND;
 			}
 			break;
 		case 123:
-			if (QUÉBEC.equals(gTrip.trip_headsign)) {
+			if (QUÉBEC.equals(gTrip.getTripHeadsign())) {
 				directionId = INBOUND;
 			} else {
 				directionId = OUTBOUND;
