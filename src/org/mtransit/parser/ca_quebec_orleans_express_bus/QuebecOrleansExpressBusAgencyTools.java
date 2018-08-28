@@ -1,21 +1,32 @@
 package org.mtransit.parser.ca_quebec_orleans_express_bus;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 import org.mtransit.parser.DefaultAgencyTools;
+import org.mtransit.parser.Pair;
+import org.mtransit.parser.SplitUtils;
 import org.mtransit.parser.Utils;
+import org.mtransit.parser.SplitUtils.RouteTripSpec;
 import org.mtransit.parser.gtfs.data.GCalendar;
 import org.mtransit.parser.gtfs.data.GCalendarDate;
 import org.mtransit.parser.gtfs.data.GRoute;
 import org.mtransit.parser.gtfs.data.GSpec;
+import org.mtransit.parser.gtfs.data.GStop;
 import org.mtransit.parser.gtfs.data.GTrip;
+import org.mtransit.parser.gtfs.data.GTripStop;
 import org.mtransit.parser.mt.data.MAgency;
 import org.mtransit.parser.mt.data.MRoute;
+import org.mtransit.parser.mt.data.MTripStop;
 import org.mtransit.parser.CleanUtils;
 import org.mtransit.parser.mt.data.MTrip;
 
-// http://gtfs.keolis.ca/gtfs.zip
+// https://gtfs.keolis.ca/gtfs.zip
 public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 
 	public static void main(String[] args) {
@@ -82,14 +93,13 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 		return CleanUtils.cleanLabel(routeLongName);
 	}
 
-	private static final String RID_7 = "7";
-	private static final String RID_6 = "6";
-	private static final String RID_5 = "5";
-	private static final String RID_4 = "4";
-	private static final String RID_3 = "3";
-	private static final String RID_2 = "2";
 	private static final String RID_1 = "1";
-
+	private static final String RID_2 = "2";
+	private static final String RID_3 = "3";
+	private static final String RID_4 = "4";
+	private static final String RID_5 = "5";
+	private static final String RID_6 = "6";
+	private static final String RID_7 = "7";
 
 	@Override
 	public String getRouteShortName(GRoute gRoute) {
@@ -120,7 +130,6 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 		return AGENCY_COLOR;
 	}
 
-
 	@Override
 	public String getRouteColor(GRoute gRoute) {
 		if (RID_1.equals(gRoute.getRouteId())) return "4E76BA";
@@ -133,98 +142,155 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 		return super.getRouteColor(gRoute);
 	}
 
-	private static final String MONTRÉAL = "Montréal";
+	private static final String MONTREAL = "Montréal";
+	private static final String CENTRE_VILLE = "Centre-Ville";
+	private static final String MONTREAL_CENTRE_VILLE = MONTREAL + " (" + "Centre Ville" + ")";
+	private static final String AEROPORT_TRUDEAU = "Aéroport Trudeau";
+	private static final String MONTREAL_AEROPORT_TRUDEAU = MONTREAL + " (" + AEROPORT_TRUDEAU + ")";
+	private static final String QUEBEC = "Québec";
+	private static final String UNIVERSITE_LAVAL = "Université Laval";
+	private static final String QUEBEC_CENTRE_VILLE = QUEBEC + " (" + CENTRE_VILLE + ")";
+	private static final String QUEBEC_UNIVERSITE_LAVAL = QUEBEC + " (" + UNIVERSITE_LAVAL + ")";
 	private static final String RIMOUSKI = "Rimouski";
-	private static final String QUÉBEC = "Québec";
-	private static final String AÉROPORT_TRUDEAU = "Aéroport-Trudeau";
-	private static final String TRUDEAU = "Trudeau";
-	private static final String RIVIERE_DU_LOUP = "Rivière-du-Loup";
+	private static final String GASPE = "Gaspé";
+	private static final String RIVIERE_DU_LOUP = "Rivière-Du-Loup";
 	private static final String VICTORIAVILLE = "Victoriaville";
 
 	private static final int INBOUND = 0;
 
 	private static final int OUTBOUND = 1;
 
+	private static HashMap<Long, RouteTripSpec> ALL_ROUTE_TRIPS2;
+	static {
+		HashMap<Long, RouteTripSpec> map2 = new HashMap<Long, RouteTripSpec>();
+		ALL_ROUTE_TRIPS2 = map2;
+	}
+
+	@Override
+	public int compareEarly(long routeId, List<MTripStop> list1, List<MTripStop> list2, MTripStop ts1, MTripStop ts2, GStop ts1GStop, GStop ts2GStop) {
+		if (ALL_ROUTE_TRIPS2.containsKey(routeId)) {
+			return ALL_ROUTE_TRIPS2.get(routeId).compare(routeId, list1, list2, ts1, ts2, ts1GStop, ts2GStop, this);
+		}
+		return super.compareEarly(routeId, list1, list2, ts1, ts2, ts1GStop, ts2GStop);
+	}
+
+	@Override
+	public ArrayList<MTrip> splitTrip(MRoute mRoute, GTrip gTrip, GSpec gtfs) {
+		if (ALL_ROUTE_TRIPS2.containsKey(mRoute.getId())) {
+			return ALL_ROUTE_TRIPS2.get(mRoute.getId()).getAllTrips();
+		}
+		return super.splitTrip(mRoute, gTrip, gtfs);
+	}
+
+	@Override
+	public Pair<Long[], Integer[]> splitTripStop(MRoute mRoute, GTrip gTrip, GTripStop gTripStop, ArrayList<MTrip> splitTrips, GSpec routeGTFS) {
+		if (ALL_ROUTE_TRIPS2.containsKey(mRoute.getId())) {
+			return SplitUtils.splitTripStop(mRoute, gTrip, gTripStop, routeGTFS, ALL_ROUTE_TRIPS2.get(mRoute.getId()), this);
+		}
+		return super.splitTripStop(mRoute, gTrip, gTripStop, splitTrips, routeGTFS);
+	}
+
 	@Override
 	public void setTripHeadsign(MRoute mRoute, MTrip mTrip, GTrip gTrip, GSpec gtfs) {
-		String stationName = cleanTripHeadsign(gTrip.getTripHeadsign());
-		int directionId = gTrip.getDirectionId() == null ? 0 : gTrip.getDirectionId();
+		if (ALL_ROUTE_TRIPS2.containsKey(mRoute.getId())) {
+			return; // split
+		}
 		int routeId = (int) mRoute.getId();
 		switch (routeId) {
 		case 1:
-			if (MONTRÉAL.equals(gTrip.getTripHeadsign())) {
-				directionId = INBOUND;
-			} else {
-				directionId = OUTBOUND;
+			if (MONTREAL_CENTRE_VILLE.equalsIgnoreCase(gTrip.getTripHeadsign())) {
+				mTrip.setHeadsignString(cleanTripHeadsign(gTrip.getTripHeadsign()), INBOUND);
+				return;
+			} else if (QUEBEC_CENTRE_VILLE.equalsIgnoreCase(gTrip.getTripHeadsign()) //
+					|| QUEBEC_UNIVERSITE_LAVAL.equalsIgnoreCase(gTrip.getTripHeadsign())) {
+				mTrip.setHeadsignString(cleanTripHeadsign(gTrip.getTripHeadsign()), OUTBOUND);
+				return;
 			}
 			break;
 		case 2:
-			if (gTrip.getTripHeadsign().contains(TRUDEAU)) {
-				stationName = AÉROPORT_TRUDEAU;
-				directionId = OUTBOUND;
-			} else {
-				directionId = INBOUND;
+			if (MONTREAL_AEROPORT_TRUDEAU.equalsIgnoreCase(gTrip.getTripHeadsign())) {
+				mTrip.setHeadsignString(cleanTripHeadsign(gTrip.getTripHeadsign()), OUTBOUND);
+				return;
+			} else if (MONTREAL_CENTRE_VILLE.equalsIgnoreCase(gTrip.getTripHeadsign())) {
+				mTrip.setHeadsignString(cleanTripHeadsign(gTrip.getTripHeadsign()), INBOUND);
+				return;
 			}
 			break;
 		case 3:
-			if (MONTRÉAL.equals(gTrip.getTripHeadsign())) {
-				directionId = INBOUND;
-			} else {
-				directionId = OUTBOUND;
+			if (MONTREAL_CENTRE_VILLE.equalsIgnoreCase(gTrip.getTripHeadsign()) //
+					|| QUEBEC_CENTRE_VILLE.equalsIgnoreCase(gTrip.getTripHeadsign())) {
+				mTrip.setHeadsignString(cleanTripHeadsign(gTrip.getTripHeadsign()), INBOUND);
+				return;
+			} else if (RIMOUSKI.equalsIgnoreCase(gTrip.getTripHeadsign()) //
+					|| RIVIERE_DU_LOUP.equalsIgnoreCase(gTrip.getTripHeadsign())) {
+				mTrip.setHeadsignString(cleanTripHeadsign(gTrip.getTripHeadsign()), OUTBOUND);
+				return;
 			}
 			break;
 		case 4:
-			if (RIMOUSKI.equals(gTrip.getTripHeadsign())) {
-				directionId = INBOUND;
-			} else {
-				directionId = OUTBOUND;
+			if (RIMOUSKI.equalsIgnoreCase(gTrip.getTripHeadsign())) {
+				mTrip.setHeadsignString(cleanTripHeadsign(gTrip.getTripHeadsign()), INBOUND);
+				return;
+			} else if (GASPE.equalsIgnoreCase(gTrip.getTripHeadsign())) {
+				mTrip.setHeadsignString(cleanTripHeadsign(gTrip.getTripHeadsign()), OUTBOUND);
+				return;
 			}
 			break;
 		case 5:
-			if (RIMOUSKI.equals(gTrip.getTripHeadsign())) {
-				directionId = INBOUND;
-			} else {
-				directionId = OUTBOUND;
+			if (RIMOUSKI.equalsIgnoreCase(gTrip.getTripHeadsign())) {
+				mTrip.setHeadsignString(cleanTripHeadsign(gTrip.getTripHeadsign()), INBOUND);
+				return;
+			} else if (GASPE.equalsIgnoreCase(gTrip.getTripHeadsign())) {
+				mTrip.setHeadsignString(cleanTripHeadsign(gTrip.getTripHeadsign()), OUTBOUND);
+				return;
 			}
 			break;
 		case 6:
-			if (MONTRÉAL.equals(gTrip.getTripHeadsign())) {
-				directionId = INBOUND;
-			} else {
-				directionId = OUTBOUND;
+			if (MONTREAL_CENTRE_VILLE.equalsIgnoreCase(gTrip.getTripHeadsign())) {
+				mTrip.setHeadsignString(cleanTripHeadsign(gTrip.getTripHeadsign()), INBOUND);
+				return;
+			} else if (QUEBEC_CENTRE_VILLE.equalsIgnoreCase(gTrip.getTripHeadsign())) {
+				mTrip.setHeadsignString(cleanTripHeadsign(gTrip.getTripHeadsign()), OUTBOUND);
+				return;
 			}
 			break;
 		case 7:
-			if (MONTRÉAL.equals(gTrip.getTripHeadsign())) {
-				directionId = INBOUND;
-			} else {
-				directionId = OUTBOUND;
+			if (MONTREAL_CENTRE_VILLE.equalsIgnoreCase(gTrip.getTripHeadsign())) {
+				mTrip.setHeadsignString(cleanTripHeadsign(gTrip.getTripHeadsign()), INBOUND);
+				return;
+			} else if (VICTORIAVILLE.equalsIgnoreCase(gTrip.getTripHeadsign())) {
+				mTrip.setHeadsignString(cleanTripHeadsign(gTrip.getTripHeadsign()), OUTBOUND);
+				return;
 			}
 			break;
-		default:
-			System.out.printf("\nUnexpected trio to split %s!\n", gTrip);
-			directionId = -1;
-			System.exit(-1);
-			return;
 		}
-		mTrip.setHeadsignString(stationName, directionId);
+		System.out.printf("\nUnexpected trio to split %s!\n", gTrip);
+		System.exit(-1);
 	}
 
 	@Override
 	public boolean mergeHeadsign(MTrip mTrip, MTrip mTripToMerge) {
-		if (mTrip.getRouteId() == 1l) {
-			if (mTrip.getHeadsignId() == OUTBOUND) {
-				mTrip.setHeadsignString(QUÉBEC, mTrip.getHeadsignId());
+		List<String> headsignsValues = Arrays.asList(mTrip.getHeadsignValue(), mTripToMerge.getHeadsignValue());
+		if (mTrip.getRouteId() == 1L) {
+			if (Arrays.asList( //
+					UNIVERSITE_LAVAL, //
+					QUEBEC // ++
+					).containsAll(headsignsValues)) {
+				mTrip.setHeadsignString(QUEBEC, mTrip.getHeadsignId());
 				return true;
 			}
-		} else if (mTrip.getRouteId() == 3l) {
-			if (mTrip.getHeadsignId() == OUTBOUND) {
-				mTrip.setHeadsignString(RIVIERE_DU_LOUP, mTrip.getHeadsignId());
+		} else if (mTrip.getRouteId() == 3L) {
+			if (Arrays.asList( //
+					RIVIERE_DU_LOUP, //
+					RIMOUSKI //
+					).containsAll(headsignsValues)) {
+				mTrip.setHeadsignString(RIMOUSKI, mTrip.getHeadsignId());
 				return true;
-			}
-		} else if (mTrip.getRouteId() == 7l) {
-			if (mTrip.getHeadsignId() == OUTBOUND) {
-				mTrip.setHeadsignString(VICTORIAVILLE, mTrip.getHeadsignId());
+			} else if (Arrays.asList( //
+					QUEBEC, //
+					MONTREAL // ++
+					).containsAll(headsignsValues)) {
+				mTrip.setHeadsignString(MONTREAL, mTrip.getHeadsignId());
 				return true;
 			}
 		}
@@ -233,8 +299,31 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 		return false;
 	}
 
+	private static final Pattern CENTRE_VILLE_ = Pattern.compile("((^|\\W){1}(centre ville)(\\W|$){1})", Pattern.CASE_INSENSITIVE);
+	private static final String CENTRE_VILLE_REPLACEMENT = "$2" + CENTRE_VILLE + "$4";
+
+	private static final Pattern MONTREAL_CENTRE_VILLE_ = Pattern
+			.compile("((^|\\W){1}(montr[é|e]al \\(centre\\-ville\\))(\\W|$){1})", Pattern.CASE_INSENSITIVE);
+	private static final String MONTREAL_CENTRE_VILLE_REPLACEMENT = "$2" + MONTREAL + "$4";
+
+	private static final Pattern QUEBEC_CENTRE_VILLE_ = Pattern.compile("((^|\\W){1}(qu[é|e]bec \\(centre\\-ville\\))(\\W|$){1})", Pattern.CASE_INSENSITIVE);
+	private static final String QUEBEC_CENTRE_VILLE_REPLACEMENT = "$2" + QUEBEC + "$4";
+
+	private static final Pattern QUEBEC_UNIVERSITE_LAVAL_ = Pattern.compile("((^|\\W){1}(qu[é|e]bec \\(université laval\\))(\\W|$){1})",
+			Pattern.CASE_INSENSITIVE);
+	private static final String QUEBEC_UNIVERSITE_LAVAL_REPLACEMENT = "$2" + UNIVERSITE_LAVAL + "$4";
+
+	private static final Pattern MONTREAL_AEROPORT_TRUDEAU_ = Pattern.compile("((^|\\W){1}(montr[é|e]al \\(a[é|e]roport trudeau\\))(\\W|$){1})",
+			Pattern.CASE_INSENSITIVE);
+	private static final String MONTREAL_AEROPORT_TRUDEAU_REPLACEMENT = "$2" + AEROPORT_TRUDEAU + "$4";
+
 	@Override
 	public String cleanTripHeadsign(String tripHeadsign) {
+		tripHeadsign = CENTRE_VILLE_.matcher(tripHeadsign).replaceAll(CENTRE_VILLE_REPLACEMENT);
+		tripHeadsign = QUEBEC_CENTRE_VILLE_.matcher(tripHeadsign).replaceAll(QUEBEC_CENTRE_VILLE_REPLACEMENT);
+		tripHeadsign = QUEBEC_UNIVERSITE_LAVAL_.matcher(tripHeadsign).replaceAll(QUEBEC_UNIVERSITE_LAVAL_REPLACEMENT);
+		tripHeadsign = MONTREAL_CENTRE_VILLE_.matcher(tripHeadsign).replaceAll(MONTREAL_CENTRE_VILLE_REPLACEMENT);
+		tripHeadsign = MONTREAL_AEROPORT_TRUDEAU_.matcher(tripHeadsign).replaceAll(MONTREAL_AEROPORT_TRUDEAU_REPLACEMENT);
 		return CleanUtils.cleanLabelFR(tripHeadsign);
 	}
 
