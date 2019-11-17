@@ -1,18 +1,13 @@
 package org.mtransit.parser.ca_quebec_orleans_express_bus;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.regex.Pattern;
-
 import org.apache.commons.lang3.StringUtils;
+import org.mtransit.parser.CleanUtils;
 import org.mtransit.parser.DefaultAgencyTools;
+import org.mtransit.parser.MTLog;
 import org.mtransit.parser.Pair;
 import org.mtransit.parser.SplitUtils;
-import org.mtransit.parser.Utils;
 import org.mtransit.parser.SplitUtils.RouteTripSpec;
+import org.mtransit.parser.Utils;
 import org.mtransit.parser.gtfs.data.GCalendar;
 import org.mtransit.parser.gtfs.data.GCalendarDate;
 import org.mtransit.parser.gtfs.data.GRoute;
@@ -22,9 +17,15 @@ import org.mtransit.parser.gtfs.data.GTrip;
 import org.mtransit.parser.gtfs.data.GTripStop;
 import org.mtransit.parser.mt.data.MAgency;
 import org.mtransit.parser.mt.data.MRoute;
-import org.mtransit.parser.mt.data.MTripStop;
-import org.mtransit.parser.CleanUtils;
 import org.mtransit.parser.mt.data.MTrip;
+import org.mtransit.parser.mt.data.MTripStop;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.regex.Pattern;
 
 // https://gtfs.keolis.ca/gtfs.zip
 public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
@@ -43,11 +44,11 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 
 	@Override
 	public void start(String[] args) {
-		System.out.printf("\nGenerating Orleans Express bus data...");
+		MTLog.log("Generating Orleans Express bus data...");
 		long start = System.currentTimeMillis();
 		this.serviceIds = extractUsefulServiceIds(args, this);
 		super.start(args);
-		System.out.printf("\nGenerating Orleans Express bus data... DONE in %s.\n", Utils.getPrettyDuration(System.currentTimeMillis() - start));
+		MTLog.log("Generating Orleans Express bus data... DONE in %s.", Utils.getPrettyDuration(System.currentTimeMillis() - start));
 	}
 
 	@Override
@@ -155,14 +156,17 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 	private static final String GASPE = "Gaspé";
 	private static final String RIVIERE_DU_LOUP = "Rivière-Du-Loup";
 	private static final String VICTORIAVILLE = "Victoriaville";
+	private static final String TROIS_RIVIERES = "Trois-Rivières";
 
 	private static final int INBOUND = 0;
 
 	private static final int OUTBOUND = 1;
 
 	private static HashMap<Long, RouteTripSpec> ALL_ROUTE_TRIPS2;
+
 	static {
-		HashMap<Long, RouteTripSpec> map2 = new HashMap<Long, RouteTripSpec>();
+		//noinspection UnnecessaryLocalVariable
+		HashMap<Long, RouteTripSpec> map2 = new HashMap<>();
 		ALL_ROUTE_TRIPS2 = map2;
 	}
 
@@ -237,6 +241,7 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 			}
 			break;
 		case 5:
+			//noinspection DuplicateBranchesInSwitch
 			if (RIMOUSKI.equalsIgnoreCase(gTrip.getTripHeadsign())) {
 				mTrip.setHeadsignString(cleanTripHeadsign(gTrip.getTripHeadsign()), INBOUND);
 				return;
@@ -252,6 +257,9 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 			} else if (QUEBEC_CENTRE_VILLE.equalsIgnoreCase(gTrip.getTripHeadsign())) {
 				mTrip.setHeadsignString(cleanTripHeadsign(gTrip.getTripHeadsign()), OUTBOUND);
 				return;
+			} else if (TROIS_RIVIERES.equalsIgnoreCase(gTrip.getTripHeadsign())) {
+				mTrip.setHeadsignString(cleanTripHeadsign(gTrip.getTripHeadsign()), OUTBOUND);
+				return;
 			}
 			break;
 		case 7:
@@ -264,8 +272,7 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 			}
 			break;
 		}
-		System.out.printf("\nUnexpected trio to split %s!\n", gTrip);
-		System.exit(-1);
+		MTLog.logFatal("Unexpected trip to split %s!", gTrip);
 	}
 
 	@Override
@@ -275,7 +282,7 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 			if (Arrays.asList( //
 					UNIVERSITE_LAVAL, //
 					QUEBEC // ++
-					).containsAll(headsignsValues)) {
+			).containsAll(headsignsValues)) {
 				mTrip.setHeadsignString(QUEBEC, mTrip.getHeadsignId());
 				return true;
 			}
@@ -283,37 +290,44 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 			if (Arrays.asList( //
 					RIVIERE_DU_LOUP, //
 					RIMOUSKI //
-					).containsAll(headsignsValues)) {
+			).containsAll(headsignsValues)) {
 				mTrip.setHeadsignString(RIMOUSKI, mTrip.getHeadsignId());
 				return true;
 			} else if (Arrays.asList( //
 					QUEBEC, //
 					MONTREAL // ++
-					).containsAll(headsignsValues)) {
+			).containsAll(headsignsValues)) {
 				mTrip.setHeadsignString(MONTREAL, mTrip.getHeadsignId());
 				return true;
 			}
+		} else if (mTrip.getRouteId() == 6L) {
+			if (Arrays.asList( //
+					TROIS_RIVIERES, //
+					QUEBEC //
+			).containsAll(headsignsValues)) {
+				mTrip.setHeadsignString(QUEBEC, mTrip.getHeadsignId());
+				return true;
+			}
 		}
-		System.out.printf("\nUnexptected trips to merge %s & %s!\n", mTrip, mTripToMerge);
-		System.exit(-1);
+		MTLog.logFatal("Unexpected trips to merge %s & %s!", mTrip, mTripToMerge);
 		return false;
 	}
 
-	private static final Pattern CENTRE_VILLE_ = Pattern.compile("((^|\\W){1}(centre ville)(\\W|$){1})", Pattern.CASE_INSENSITIVE);
+	private static final Pattern CENTRE_VILLE_ = Pattern.compile("((^|\\W)(centre ville)(\\W|$))", Pattern.CASE_INSENSITIVE);
 	private static final String CENTRE_VILLE_REPLACEMENT = "$2" + CENTRE_VILLE + "$4";
 
 	private static final Pattern MONTREAL_CENTRE_VILLE_ = Pattern
-			.compile("((^|\\W){1}(montr[é|e]al \\(centre\\-ville\\))(\\W|$){1})", Pattern.CASE_INSENSITIVE);
+			.compile("((^|\\W)(montr[é|e]al \\(centre-ville\\))(\\W|$))", Pattern.CASE_INSENSITIVE);
 	private static final String MONTREAL_CENTRE_VILLE_REPLACEMENT = "$2" + MONTREAL + "$4";
 
-	private static final Pattern QUEBEC_CENTRE_VILLE_ = Pattern.compile("((^|\\W){1}(qu[é|e]bec \\(centre\\-ville\\))(\\W|$){1})", Pattern.CASE_INSENSITIVE);
+	private static final Pattern QUEBEC_CENTRE_VILLE_ = Pattern.compile("((^|\\W)(qu[é|e]bec \\(centre-ville\\))(\\W|$))", Pattern.CASE_INSENSITIVE);
 	private static final String QUEBEC_CENTRE_VILLE_REPLACEMENT = "$2" + QUEBEC + "$4";
 
-	private static final Pattern QUEBEC_UNIVERSITE_LAVAL_ = Pattern.compile("((^|\\W){1}(qu[é|e]bec \\(université laval\\))(\\W|$){1})",
+	private static final Pattern QUEBEC_UNIVERSITE_LAVAL_ = Pattern.compile("((^|\\W)(qu[é|e]bec \\(université laval\\))(\\W|$))",
 			Pattern.CASE_INSENSITIVE);
 	private static final String QUEBEC_UNIVERSITE_LAVAL_REPLACEMENT = "$2" + UNIVERSITE_LAVAL + "$4";
 
-	private static final Pattern MONTREAL_AEROPORT_TRUDEAU_ = Pattern.compile("((^|\\W){1}(montr[é|e]al \\(a[é|e]roport trudeau\\))(\\W|$){1})",
+	private static final Pattern MONTREAL_AEROPORT_TRUDEAU_ = Pattern.compile("((^|\\W)(montr[é|e]al \\(a[é|e]roport trudeau\\))(\\W|$))",
 			Pattern.CASE_INSENSITIVE);
 	private static final String MONTREAL_AEROPORT_TRUDEAU_REPLACEMENT = "$2" + AEROPORT_TRUDEAU + "$4";
 
