@@ -46,7 +46,7 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 	public void start(String[] args) {
 		MTLog.log("Generating Orleans Express bus data...");
 		long start = System.currentTimeMillis();
-		this.serviceIds = extractUsefulServiceIds(args, this);
+		this.serviceIds = extractUsefulServiceIds(args, this, true);
 		super.start(args);
 		MTLog.log("Generating Orleans Express bus data... DONE in %s.", Utils.getPrettyDuration(System.currentTimeMillis() - start));
 	}
@@ -151,6 +151,7 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 	private static final String QUEBEC = "Québec";
 	private static final String UNIVERSITE_LAVAL = "Université Laval";
 	private static final String QUEBEC_CENTRE_VILLE = QUEBEC + " (" + CENTRE_VILLE + ")";
+	private static final String QUEBEC_SAINTE_FOY = QUEBEC + " (" + "Sainte-Foy" + ")";
 	private static final String QUEBEC_UNIVERSITE_LAVAL = QUEBEC + " (" + UNIVERSITE_LAVAL + ")";
 	private static final String RIMOUSKI = "Rimouski";
 	private static final String GASPE = "Gaspé";
@@ -215,7 +216,8 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 			if (MONTREAL_AEROPORT_TRUDEAU.equalsIgnoreCase(gTrip.getTripHeadsign())) {
 				mTrip.setHeadsignString(cleanTripHeadsign(gTrip.getTripHeadsign()), OUTBOUND);
 				return;
-			} else if (MONTREAL_CENTRE_VILLE.equalsIgnoreCase(gTrip.getTripHeadsign())) {
+			} else if (MONTREAL_CENTRE_VILLE.equalsIgnoreCase(gTrip.getTripHeadsign())
+					|| QUEBEC_SAINTE_FOY.equalsIgnoreCase(gTrip.getTripHeadsign())) {
 				mTrip.setHeadsignString(cleanTripHeadsign(gTrip.getTripHeadsign()), INBOUND);
 				return;
 			}
@@ -272,7 +274,7 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 			}
 			break;
 		}
-		MTLog.logFatal("Unexpected trip to split %s!", gTrip);
+		throw new MTLog.Fatal("Unexpected trip to split %s!", gTrip.toStringPlus());
 	}
 
 	@Override
@@ -284,6 +286,14 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 					QUEBEC // ++
 			).containsAll(headsignsValues)) {
 				mTrip.setHeadsignString(QUEBEC, mTrip.getHeadsignId());
+				return true;
+			}
+		} else if (mTrip.getRouteId() == 2L) {
+			if (Arrays.asList( //
+					"Québec (Ste-Foy)", //
+					MONTREAL //
+			).containsAll(headsignsValues)) {
+				mTrip.setHeadsignString(MONTREAL, mTrip.getHeadsignId()); // Québec (Ste-Foy)
 				return true;
 			}
 		} else if (mTrip.getRouteId() == 3L) {
