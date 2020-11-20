@@ -146,6 +146,7 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 	private static final String MONTREAL = "Montréal";
 	private static final String CENTRE_VILLE = "Centre-Ville";
 	private static final String MONTREAL_CENTRE_VILLE = MONTREAL + " (" + "Centre Ville" + ")";
+	private static final String MONTREAL_CENTRE_VILLE_2 = MONTREAL + " (" + "centre-ville" + ")";
 	private static final String AEROPORT_TRUDEAU = "Aéroport Trudeau";
 	private static final String MONTREAL_AEROPORT_TRUDEAU = MONTREAL + " (" + AEROPORT_TRUDEAU + ")";
 	private static final String QUEBEC = "Québec";
@@ -163,7 +164,7 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 
 	private static final int OUTBOUND = 1;
 
-	private static HashMap<Long, RouteTripSpec> ALL_ROUTE_TRIPS2;
+	private static final HashMap<Long, RouteTripSpec> ALL_ROUTE_TRIPS2;
 
 	static {
 		//noinspection UnnecessaryLocalVariable
@@ -203,7 +204,8 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 		int routeId = (int) mRoute.getId();
 		switch (routeId) {
 		case 1:
-			if (MONTREAL_CENTRE_VILLE.equalsIgnoreCase(gTrip.getTripHeadsign())) {
+			if (MONTREAL_CENTRE_VILLE.equalsIgnoreCase(gTrip.getTripHeadsign())
+				|| MONTREAL_CENTRE_VILLE_2.equalsIgnoreCase(gTrip.getTripHeadsign())) {
 				mTrip.setHeadsignString(cleanTripHeadsign(gTrip.getTripHeadsign()), INBOUND);
 				return;
 			} else if (QUEBEC_CENTRE_VILLE.equalsIgnoreCase(gTrip.getTripHeadsign()) //
@@ -217,6 +219,7 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 				mTrip.setHeadsignString(cleanTripHeadsign(gTrip.getTripHeadsign()), OUTBOUND);
 				return;
 			} else if (MONTREAL_CENTRE_VILLE.equalsIgnoreCase(gTrip.getTripHeadsign())
+					|| MONTREAL_CENTRE_VILLE_2.equalsIgnoreCase(gTrip.getTripHeadsign())
 					|| QUEBEC_SAINTE_FOY.equalsIgnoreCase(gTrip.getTripHeadsign())) {
 				mTrip.setHeadsignString(cleanTripHeadsign(gTrip.getTripHeadsign()), INBOUND);
 				return;
@@ -224,6 +227,7 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 			break;
 		case 3:
 			if (MONTREAL_CENTRE_VILLE.equalsIgnoreCase(gTrip.getTripHeadsign()) //
+					|| MONTREAL_CENTRE_VILLE_2.equalsIgnoreCase(gTrip.getTripHeadsign())
 					|| QUEBEC_CENTRE_VILLE.equalsIgnoreCase(gTrip.getTripHeadsign())) {
 				mTrip.setHeadsignString(cleanTripHeadsign(gTrip.getTripHeadsign()), INBOUND);
 				return;
@@ -253,7 +257,8 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 			}
 			break;
 		case 6:
-			if (MONTREAL_CENTRE_VILLE.equalsIgnoreCase(gTrip.getTripHeadsign())) {
+			if (MONTREAL_CENTRE_VILLE.equalsIgnoreCase(gTrip.getTripHeadsign())
+				|| MONTREAL_CENTRE_VILLE_2.equalsIgnoreCase(gTrip.getTripHeadsign())) {
 				mTrip.setHeadsignString(cleanTripHeadsign(gTrip.getTripHeadsign()), INBOUND);
 				return;
 			} else if (QUEBEC_CENTRE_VILLE.equalsIgnoreCase(gTrip.getTripHeadsign())) {
@@ -265,7 +270,8 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 			}
 			break;
 		case 7:
-			if (MONTREAL_CENTRE_VILLE.equalsIgnoreCase(gTrip.getTripHeadsign())) {
+			if (MONTREAL_CENTRE_VILLE.equalsIgnoreCase(gTrip.getTripHeadsign())
+				|| MONTREAL_CENTRE_VILLE_2.equalsIgnoreCase(gTrip.getTripHeadsign())) {
 				mTrip.setHeadsignString(cleanTripHeadsign(gTrip.getTripHeadsign()), INBOUND);
 				return;
 			} else if (VICTORIAVILLE.equalsIgnoreCase(gTrip.getTripHeadsign())) {
@@ -319,26 +325,25 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 				return true;
 			}
 		}
-		MTLog.logFatal("Unexpected trips to merge %s & %s!", mTrip, mTripToMerge);
-		return false;
+		throw new MTLog.Fatal("Unexpected trips to merge %s & %s!", mTrip, mTripToMerge);
 	}
 
 	private static final Pattern CENTRE_VILLE_ = Pattern.compile("((^|\\W)(centre ville)(\\W|$))", Pattern.CASE_INSENSITIVE);
 	private static final String CENTRE_VILLE_REPLACEMENT = "$2" + CENTRE_VILLE + "$4";
 
 	private static final Pattern MONTREAL_CENTRE_VILLE_ = Pattern
-			.compile("((^|\\W)(montr[é|e]al \\(centre-ville\\))(\\W|$))", Pattern.CASE_INSENSITIVE);
+			.compile("((^|\\W)(montr[é|e]al \\(centre-ville\\))(\\W|$))", Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
 	private static final String MONTREAL_CENTRE_VILLE_REPLACEMENT = "$2" + MONTREAL + "$4";
 
-	private static final Pattern QUEBEC_CENTRE_VILLE_ = Pattern.compile("((^|\\W)(qu[é|e]bec \\(centre-ville\\))(\\W|$))", Pattern.CASE_INSENSITIVE);
+	private static final Pattern QUEBEC_CENTRE_VILLE_ = Pattern.compile("((^|\\W)(qu[é|e]bec \\(centre-ville\\))(\\W|$))", Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
 	private static final String QUEBEC_CENTRE_VILLE_REPLACEMENT = "$2" + QUEBEC + "$4";
 
 	private static final Pattern QUEBEC_UNIVERSITE_LAVAL_ = Pattern.compile("((^|\\W)(qu[é|e]bec \\(université laval\\))(\\W|$))",
-			Pattern.CASE_INSENSITIVE);
+			Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE | Pattern.CANON_EQ);
 	private static final String QUEBEC_UNIVERSITE_LAVAL_REPLACEMENT = "$2" + UNIVERSITE_LAVAL + "$4";
 
 	private static final Pattern MONTREAL_AEROPORT_TRUDEAU_ = Pattern.compile("((^|\\W)(montr[é|e]al \\(a[é|e]roport trudeau\\))(\\W|$))",
-			Pattern.CASE_INSENSITIVE);
+			Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
 	private static final String MONTREAL_AEROPORT_TRUDEAU_REPLACEMENT = "$2" + AEROPORT_TRUDEAU + "$4";
 
 	@Override
