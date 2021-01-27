@@ -1,12 +1,14 @@
 package org.mtransit.parser.ca_quebec_orleans_express_bus;
 
-import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.mtransit.parser.CleanUtils;
 import org.mtransit.parser.DefaultAgencyTools;
 import org.mtransit.parser.MTLog;
 import org.mtransit.parser.Pair;
 import org.mtransit.parser.SplitUtils;
 import org.mtransit.parser.SplitUtils.RouteTripSpec;
+import org.mtransit.parser.StringUtils;
 import org.mtransit.parser.Utils;
 import org.mtransit.parser.gtfs.data.GCalendar;
 import org.mtransit.parser.gtfs.data.GCalendarDate;
@@ -25,12 +27,13 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.regex.Pattern;
 
 // https://gtfs.keolis.ca/gtfs.zip
 public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 
-	public static void main(String[] args) {
+	public static void main(@Nullable String[] args) {
 		if (args == null || args.length == 0) {
 			args = new String[3];
 			args[0] = "input/gtfs.zip";
@@ -40,57 +43,60 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 		new QuebecOrleansExpressBusAgencyTools().start(args);
 	}
 
-	private HashSet<String> serviceIds;
+	@Nullable
+	private HashSet<Integer> serviceIdInts;
 
 	@Override
-	public void start(String[] args) {
+	public void start(@NotNull String[] args) {
 		MTLog.log("Generating Orleans Express bus data...");
 		long start = System.currentTimeMillis();
-		this.serviceIds = extractUsefulServiceIds(args, this, true);
+		this.serviceIdInts = extractUsefulServiceIdInts(args, this, true);
 		super.start(args);
 		MTLog.log("Generating Orleans Express bus data... DONE in %s.", Utils.getPrettyDuration(System.currentTimeMillis() - start));
 	}
 
 	@Override
 	public boolean excludingAll() {
-		return this.serviceIds != null && this.serviceIds.isEmpty();
+		return this.serviceIdInts != null && this.serviceIdInts.isEmpty();
 	}
 
 	@Override
-	public boolean excludeCalendar(GCalendar gCalendar) {
-		if (this.serviceIds != null) {
-			return excludeUselessCalendar(gCalendar, this.serviceIds);
+	public boolean excludeCalendar(@NotNull GCalendar gCalendar) {
+		if (this.serviceIdInts != null) {
+			return excludeUselessCalendarInt(gCalendar, this.serviceIdInts);
 		}
 		return super.excludeCalendar(gCalendar);
 	}
 
 	@Override
-	public boolean excludeCalendarDate(GCalendarDate gCalendarDates) {
-		if (this.serviceIds != null) {
-			return excludeUselessCalendarDate(gCalendarDates, this.serviceIds);
+	public boolean excludeCalendarDate(@NotNull GCalendarDate gCalendarDates) {
+		if (this.serviceIdInts != null) {
+			return excludeUselessCalendarDateInt(gCalendarDates, this.serviceIdInts);
 		}
 		return super.excludeCalendarDate(gCalendarDates);
 	}
 
 	@Override
-	public boolean excludeTrip(GTrip gTrip) {
-		if (this.serviceIds != null) {
-			return excludeUselessTrip(gTrip, this.serviceIds);
+	public boolean excludeTrip(@NotNull GTrip gTrip) {
+		if (this.serviceIdInts != null) {
+			return excludeUselessTripInt(gTrip, this.serviceIdInts);
 		}
 		return super.excludeTrip(gTrip);
 	}
 
+	@NotNull
 	@Override
 	public Integer getAgencyRouteType() {
 		return MAgency.ROUTE_TYPE_BUS;
 	}
 
+	@NotNull
 	@Override
-	public String getRouteLongName(GRoute gRoute) {
-		String routeLongName = gRoute.getRouteLongName();
+	public String getRouteLongName(@NotNull GRoute gRoute) {
+		String routeLongName = gRoute.getRouteLongNameOrDefault();
 		routeLongName = CleanUtils.SAINT.matcher(routeLongName).replaceAll(CleanUtils.SAINT_REPLACEMENT);
-		routeLongName = CleanUtils.CLEAN_PARENTHESE1.matcher(routeLongName).replaceAll(CleanUtils.CLEAN_PARENTHESE1_REPLACEMENT);
-		routeLongName = CleanUtils.CLEAN_PARENTHESE2.matcher(routeLongName).replaceAll(CleanUtils.CLEAN_PARENTHESE2_REPLACEMENT);
+		routeLongName = CleanUtils.CLEAN_PARENTHESIS1.matcher(routeLongName).replaceAll(CleanUtils.CLEAN_PARENTHESIS1_REPLACEMENT);
+		routeLongName = CleanUtils.CLEAN_PARENTHESIS2.matcher(routeLongName).replaceAll(CleanUtils.CLEAN_PARENTHESIS2_REPLACEMENT);
 		return CleanUtils.cleanLabel(routeLongName);
 	}
 
@@ -102,22 +108,26 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 	private static final String RID_6 = "6";
 	private static final String RID_7 = "7";
 
+	@Nullable
 	@Override
-	public String getRouteShortName(GRoute gRoute) {
+	public String getRouteShortName(@NotNull GRoute gRoute) {
 		if (StringUtils.isEmpty(gRoute.getRouteShortName())) {
-			if (RID_1.equals(gRoute.getRouteId())) {
+			//noinspection deprecation
+			final String routeId = gRoute.getRouteId();
+			switch (routeId) {
+			case RID_1:
 				return "MT QC S"; // Montréal - Québec ( Express )
-			} else if (RID_2.equals(gRoute.getRouteId())) {
+			case RID_2:
 				return "MT YUL"; // Montréal - Aéroport Montréal-Trudeau
-			} else if (RID_3.equals(gRoute.getRouteId())) {
+			case RID_3:
 				return "QC RK"; // Bas-Saint-Laurent
-			} else if (RID_4.equals(gRoute.getRouteId())) {
+			case RID_4:
 				return "RK GS S"; // Gaspésie ( Côté Sud De La Péninsule )
-			} else if (RID_5.equals(gRoute.getRouteId())) {
+			case RID_5:
 				return "RK GS N"; // Gaspésie ( Côté Nord De La Péninsule )
-			} else if (RID_6.equals(gRoute.getRouteId())) {
+			case RID_6:
 				return "MT QC N"; // Montréal - Québec ( Mauricie )
-			} else if (RID_7.equals(gRoute.getRouteId())) {
+			case RID_7:
 				return "MT VT"; // Centre-du-Québec
 			}
 		}
@@ -126,20 +136,26 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 
 	private static final String AGENCY_COLOR = "01ADB9";
 
+	@NotNull
 	@Override
 	public String getAgencyColor() {
 		return AGENCY_COLOR;
 	}
 
+	@Nullable
 	@Override
-	public String getRouteColor(GRoute gRoute) {
-		if (RID_1.equals(gRoute.getRouteId())) return "4E76BA";
-		if (RID_2.equals(gRoute.getRouteId())) return "4E76BA";
-		if (RID_3.equals(gRoute.getRouteId())) return "BF2026";
-		if (RID_4.equals(gRoute.getRouteId())) return "69BD45";
-		if (RID_5.equals(gRoute.getRouteId())) return "69BD45";
-		if (RID_6.equals(gRoute.getRouteId())) return "F89843";
-		if (RID_7.equals(gRoute.getRouteId())) return "01ADB9";
+	public String getRouteColor(@NotNull GRoute gRoute) {
+		if (StringUtils.isEmpty(gRoute.getRouteColor())) {
+			//noinspection deprecation
+			final String routeId = gRoute.getRouteId();
+			if (RID_1.equals(routeId)) return "4E76BA";
+			if (RID_2.equals(routeId)) return "4E76BA";
+			if (RID_3.equals(routeId)) return "BF2026";
+			if (RID_4.equals(routeId)) return "69BD45";
+			if (RID_5.equals(routeId)) return "69BD45";
+			if (RID_6.equals(routeId)) return "F89843";
+			if (RID_7.equals(routeId)) return "01ADB9";
+		}
 		return super.getRouteColor(gRoute);
 	}
 
@@ -173,23 +189,25 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 	}
 
 	@Override
-	public int compareEarly(long routeId, List<MTripStop> list1, List<MTripStop> list2, MTripStop ts1, MTripStop ts2, GStop ts1GStop, GStop ts2GStop) {
+	public int compareEarly(long routeId, @NotNull List<MTripStop> list1, @NotNull List<MTripStop> list2, @NotNull MTripStop ts1, @NotNull MTripStop ts2, @NotNull GStop ts1GStop, @NotNull GStop ts2GStop) {
 		if (ALL_ROUTE_TRIPS2.containsKey(routeId)) {
 			return ALL_ROUTE_TRIPS2.get(routeId).compare(routeId, list1, list2, ts1, ts2, ts1GStop, ts2GStop, this);
 		}
 		return super.compareEarly(routeId, list1, list2, ts1, ts2, ts1GStop, ts2GStop);
 	}
 
+	@NotNull
 	@Override
-	public ArrayList<MTrip> splitTrip(MRoute mRoute, GTrip gTrip, GSpec gtfs) {
+	public ArrayList<MTrip> splitTrip(@NotNull MRoute mRoute, @Nullable GTrip gTrip, @NotNull GSpec gtfs) {
 		if (ALL_ROUTE_TRIPS2.containsKey(mRoute.getId())) {
 			return ALL_ROUTE_TRIPS2.get(mRoute.getId()).getAllTrips();
 		}
 		return super.splitTrip(mRoute, gTrip, gtfs);
 	}
 
+	@NotNull
 	@Override
-	public Pair<Long[], Integer[]> splitTripStop(MRoute mRoute, GTrip gTrip, GTripStop gTripStop, ArrayList<MTrip> splitTrips, GSpec routeGTFS) {
+	public Pair<Long[], Integer[]> splitTripStop(@NotNull MRoute mRoute, @NotNull GTrip gTrip, @NotNull GTripStop gTripStop, @NotNull ArrayList<MTrip> splitTrips, @NotNull GSpec routeGTFS) {
 		if (ALL_ROUTE_TRIPS2.containsKey(mRoute.getId())) {
 			return SplitUtils.splitTripStop(mRoute, gTrip, gTripStop, routeGTFS, ALL_ROUTE_TRIPS2.get(mRoute.getId()), this);
 		}
@@ -197,7 +215,7 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 	}
 
 	@Override
-	public void setTripHeadsign(MRoute mRoute, MTrip mTrip, GTrip gTrip, GSpec gtfs) {
+	public void setTripHeadsign(@NotNull MRoute mRoute, @NotNull MTrip mTrip, @NotNull GTrip gTrip, @NotNull GSpec gtfs) {
 		if (ALL_ROUTE_TRIPS2.containsKey(mRoute.getId())) {
 			return; // split
 		}
@@ -205,7 +223,7 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 		switch (routeId) {
 		case 1:
 			if (MONTREAL_CENTRE_VILLE.equalsIgnoreCase(gTrip.getTripHeadsign())
-				|| MONTREAL_CENTRE_VILLE_2.equalsIgnoreCase(gTrip.getTripHeadsign())) {
+					|| MONTREAL_CENTRE_VILLE_2.equalsIgnoreCase(gTrip.getTripHeadsign())) {
 				mTrip.setHeadsignString(cleanTripHeadsign(gTrip.getTripHeadsign()), INBOUND);
 				return;
 			} else if (QUEBEC_CENTRE_VILLE.equalsIgnoreCase(gTrip.getTripHeadsign()) //
@@ -258,7 +276,7 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 			break;
 		case 6:
 			if (MONTREAL_CENTRE_VILLE.equalsIgnoreCase(gTrip.getTripHeadsign())
-				|| MONTREAL_CENTRE_VILLE_2.equalsIgnoreCase(gTrip.getTripHeadsign())) {
+					|| MONTREAL_CENTRE_VILLE_2.equalsIgnoreCase(gTrip.getTripHeadsign())) {
 				mTrip.setHeadsignString(cleanTripHeadsign(gTrip.getTripHeadsign()), INBOUND);
 				return;
 			} else if (QUEBEC_CENTRE_VILLE.equalsIgnoreCase(gTrip.getTripHeadsign())) {
@@ -271,7 +289,7 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 			break;
 		case 7:
 			if (MONTREAL_CENTRE_VILLE.equalsIgnoreCase(gTrip.getTripHeadsign())
-				|| MONTREAL_CENTRE_VILLE_2.equalsIgnoreCase(gTrip.getTripHeadsign())) {
+					|| MONTREAL_CENTRE_VILLE_2.equalsIgnoreCase(gTrip.getTripHeadsign())) {
 				mTrip.setHeadsignString(cleanTripHeadsign(gTrip.getTripHeadsign()), INBOUND);
 				return;
 			} else if (VICTORIAVILLE.equalsIgnoreCase(gTrip.getTripHeadsign())) {
@@ -284,7 +302,7 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 	}
 
 	@Override
-	public boolean mergeHeadsign(MTrip mTrip, MTrip mTripToMerge) {
+	public boolean mergeHeadsign(@NotNull MTrip mTrip, @NotNull MTrip mTripToMerge) {
 		List<String> headsignsValues = Arrays.asList(mTrip.getHeadsignValue(), mTripToMerge.getHeadsignValue());
 		if (mTrip.getRouteId() == 1L) {
 			if (Arrays.asList( //
@@ -346,18 +364,24 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 			Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
 	private static final String MONTREAL_AEROPORT_TRUDEAU_REPLACEMENT = "$2" + AEROPORT_TRUDEAU + "$4";
 
+	@NotNull
 	@Override
-	public String cleanTripHeadsign(String tripHeadsign) {
+	public String cleanTripHeadsign(@NotNull String tripHeadsign) {
 		tripHeadsign = CENTRE_VILLE_.matcher(tripHeadsign).replaceAll(CENTRE_VILLE_REPLACEMENT);
 		tripHeadsign = QUEBEC_CENTRE_VILLE_.matcher(tripHeadsign).replaceAll(QUEBEC_CENTRE_VILLE_REPLACEMENT);
 		tripHeadsign = QUEBEC_UNIVERSITE_LAVAL_.matcher(tripHeadsign).replaceAll(QUEBEC_UNIVERSITE_LAVAL_REPLACEMENT);
 		tripHeadsign = MONTREAL_CENTRE_VILLE_.matcher(tripHeadsign).replaceAll(MONTREAL_CENTRE_VILLE_REPLACEMENT);
 		tripHeadsign = MONTREAL_AEROPORT_TRUDEAU_.matcher(tripHeadsign).replaceAll(MONTREAL_AEROPORT_TRUDEAU_REPLACEMENT);
+		tripHeadsign = CleanUtils.cleanBounds(Locale.FRENCH, tripHeadsign);
+		tripHeadsign = CleanUtils.cleanStreetTypesFRCA(tripHeadsign);
 		return CleanUtils.cleanLabelFR(tripHeadsign);
 	}
 
+	@NotNull
 	@Override
-	public String cleanStopName(String gStopName) {
+	public String cleanStopName(@NotNull String gStopName) {
+		gStopName = CleanUtils.cleanBounds(Locale.FRENCH, gStopName);
+		gStopName = CleanUtils.cleanStreetTypesFRCA(gStopName);
 		return CleanUtils.cleanLabelFR(gStopName);
 	}
 }
