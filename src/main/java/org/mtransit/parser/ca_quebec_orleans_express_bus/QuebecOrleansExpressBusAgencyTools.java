@@ -53,6 +53,7 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 	private static final String RID_5 = "5";
 	private static final String RID_6 = "6";
 	private static final String RID_7 = "7";
+	private static final String RID_53 = "53";
 
 	@Nullable
 	@Override
@@ -75,6 +76,8 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 				return "MT QC N"; // Montréal - Québec ( Mauricie )
 			case RID_7:
 				return "MT VT"; // Centre-du-Québec
+			case RID_53:
+				return "MT OT"; // Montréal - Ottawa
 			}
 		}
 		return super.getRouteShortName(gRoute);
@@ -101,6 +104,7 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 			if (RID_5.equals(routeId)) return "69BD45";
 			if (RID_6.equals(routeId)) return "F89843";
 			if (RID_7.equals(routeId)) return "01ADB9";
+			if (RID_53.equals(routeId)) return "8224E3";
 		}
 		return super.getRouteColor(gRoute);
 	}
