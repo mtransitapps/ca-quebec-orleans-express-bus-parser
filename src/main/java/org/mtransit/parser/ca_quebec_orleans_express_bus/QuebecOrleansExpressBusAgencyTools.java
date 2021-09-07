@@ -98,7 +98,7 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 
 	@Nullable
 	@Override
-	public String getRouteColor(@NotNull GRoute gRoute) {
+	public String getRouteColor(@NotNull GRoute gRoute, @NotNull MAgency agency) {
 		if (StringUtils.isEmpty(gRoute.getRouteColor())) {
 			//noinspection deprecation
 			final String routeId = gRoute.getRouteId();
@@ -111,7 +111,7 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 			if (RID_7.equals(routeId)) return "01ADB9";
 			if (RID_53.equals(routeId)) return "8224E3";
 		}
-		return super.getRouteColor(gRoute);
+		return super.getRouteColor(gRoute, agency);
 	}
 
 	@Override
