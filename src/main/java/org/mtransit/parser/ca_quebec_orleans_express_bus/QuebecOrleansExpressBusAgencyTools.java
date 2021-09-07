@@ -1,5 +1,7 @@
 package org.mtransit.parser.ca_quebec_orleans_express_bus;
 
+import static org.mtransit.commons.StringUtils.EMPTY;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mtransit.commons.CleanUtils;
@@ -10,8 +12,6 @@ import org.mtransit.parser.mt.data.MAgency;
 
 import java.util.Locale;
 import java.util.regex.Pattern;
-
-import static org.mtransit.commons.StringUtils.EMPTY;
 
 // https://gtfs.keolis.ca/gtfs.zip
 public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
@@ -83,6 +83,11 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 		return super.getRouteShortName(gRoute);
 	}
 
+	@Override
+	public boolean defaultAgencyColorEnabled() {
+		return true;
+	}
+
 	private static final String AGENCY_COLOR = "01ADB9";
 
 	@NotNull
@@ -119,21 +124,18 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 		return true;
 	}
 
-	private static final String CENTRE_VILLE = "Centre-Ville";
 	private static final Pattern FIX_CENTRE_VILLE_ = Pattern.compile("((^|\\W)(centre ville)(\\W|$))", Pattern.CASE_INSENSITIVE);
-	private static final String FIX_CENTRE_VILLE_REPLACEMENT = "$2" + CENTRE_VILLE + "$4";
+	private static final String FIX_CENTRE_VILLE_REPLACEMENT = "$2" + "Centre-Ville" + "$4";
 
 	private static final Pattern REMOVE_ENDS_W_CENTRE_VILLE_ = Pattern.compile("(( \\(centre-ville\\))(\\W|$))");
 
-	private static final String UNIVERSITE_LAVAL = "Université Laval";
 	private static final Pattern QUEBEC_UNIVERSITE_LAVAL_ = Pattern.compile("((^|\\W)(qu[é|e]bec \\(université laval\\))(\\W|$))",
 			Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE | Pattern.CANON_EQ);
-	private static final String QUEBEC_UNIVERSITE_LAVAL_REPLACEMENT = "$2" + UNIVERSITE_LAVAL + "$4";
+	private static final String QUEBEC_UNIVERSITE_LAVAL_REPLACEMENT = "$2" + "Université Laval" + "$4";
 
-	private static final String AEROPORT_TRUDEAU = "Aéroport Trudeau";
 	private static final Pattern MONTREAL_AEROPORT_TRUDEAU_ = Pattern.compile("((^|\\W)(montr[é|e]al \\(a[é|e]roport trudeau\\))(\\W|$))",
 			Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
-	private static final String MONTREAL_AEROPORT_TRUDEAU_REPLACEMENT = "$2" + AEROPORT_TRUDEAU + "$4";
+	private static final String MONTREAL_AEROPORT_TRUDEAU_REPLACEMENT = "$2" + "Aéroport Trudeau" + "$4";
 
 	@NotNull
 	@Override
