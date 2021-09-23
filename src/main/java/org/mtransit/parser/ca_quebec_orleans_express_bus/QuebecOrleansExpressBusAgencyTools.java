@@ -5,11 +5,11 @@ import static org.mtransit.commons.StringUtils.EMPTY;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mtransit.commons.CleanUtils;
-import org.mtransit.commons.StringUtils;
 import org.mtransit.parser.DefaultAgencyTools;
 import org.mtransit.parser.gtfs.data.GRoute;
 import org.mtransit.parser.mt.data.MAgency;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
@@ -18,6 +18,12 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 
 	public static void main(@NotNull String[] args) {
 		new QuebecOrleansExpressBusAgencyTools().start(args);
+	}
+
+	@Nullable
+	@Override
+	public List<Locale> getSupportedLanguages() {
+		return LANG_FR;
 	}
 
 	@NotNull
@@ -37,6 +43,21 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 		return MAgency.ROUTE_TYPE_BUS;
 	}
 
+	@Override
+	public boolean defaultRouteIdEnabled() {
+		return true;
+	}
+
+	@Override
+	public boolean useRouteShortNameForRouteId() {
+		return false; // no route short name provided
+	}
+
+	@Override
+	public boolean defaultRouteLongNameEnabled() {
+		return true;
+	}
+
 	@NotNull
 	@Override
 	public String cleanRouteLongName(@NotNull String routeLongName) {
@@ -46,41 +67,29 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 		return CleanUtils.cleanLabel(routeLongName);
 	}
 
-	private static final String RID_1 = "1";
-	private static final String RID_2 = "2";
-	private static final String RID_3 = "3";
-	private static final String RID_4 = "4";
-	private static final String RID_5 = "5";
-	private static final String RID_6 = "6";
-	private static final String RID_7 = "7";
-	private static final String RID_53 = "53";
-
-	@Nullable
+	@NotNull
 	@Override
-	public String getRouteShortName(@NotNull GRoute gRoute) {
-		if (StringUtils.isEmpty(gRoute.getRouteShortName())) {
-			//noinspection deprecation
-			final String routeId = gRoute.getRouteId();
-			switch (routeId) {
-			case RID_1:
-				return "MT QC S"; // Montréal - Québec ( Express )
-			case RID_2:
-				return "MT YUL"; // Montréal - Aéroport Montréal-Trudeau
-			case RID_3:
-				return "QC RK"; // Bas-Saint-Laurent
-			case RID_4:
-				return "RK GS S"; // Gaspésie ( Côté Sud De La Péninsule )
-			case RID_5:
-				return "RK GS N"; // Gaspésie ( Côté Nord De La Péninsule )
-			case RID_6:
-				return "MT QC N"; // Montréal - Québec ( Mauricie )
-			case RID_7:
-				return "MT VT"; // Centre-du-Québec
-			case RID_53:
-				return "MT OT"; // Montréal - Ottawa
-			}
+	public String provideMissingRouteShortName(@NotNull GRoute gRoute) {
+		//noinspection deprecation
+		switch (gRoute.getRouteId()) {
+		case "1": // Montréal - Quebec (Express)
+			return "MT QC S";
+		case "2": // Service aéroport Trudeau // Montréal - Aéroport Montréal-Trudeau
+			return "MT YUL";
+		case "3": // Bas-Saint-Laurent
+			return "QC RK";
+		case "4": // Gaspésie (Sud)
+			return "RK GS S";
+		case "5": // Gaspésie (Nord)
+			return "RK GS N";
+		case "6": // Montréal - Québec (Mauricie)
+			return "MT QC N";
+		case "7": // Centre-du-Québec // Drummondville - Victoriaville
+			return "MT VT";
+		case "53": // Montréal - Ottawa
+			return "MT OT";
 		}
-		return super.getRouteShortName(gRoute);
+		return super.provideMissingRouteShortName(gRoute);
 	}
 
 	@Override
@@ -98,20 +107,28 @@ public class QuebecOrleansExpressBusAgencyTools extends DefaultAgencyTools {
 
 	@Nullable
 	@Override
-	public String getRouteColor(@NotNull GRoute gRoute, @NotNull MAgency agency) {
-		if (StringUtils.isEmpty(gRoute.getRouteColor())) {
-			//noinspection deprecation
-			final String routeId = gRoute.getRouteId();
-			if (RID_1.equals(routeId)) return "4E76BA";
-			if (RID_2.equals(routeId)) return "4E76BA";
-			if (RID_3.equals(routeId)) return "BF2026";
-			if (RID_4.equals(routeId)) return "69BD45";
-			if (RID_5.equals(routeId)) return "69BD45";
-			if (RID_6.equals(routeId)) return "F89843";
-			if (RID_7.equals(routeId)) return "01ADB9";
-			if (RID_53.equals(routeId)) return "8224E3";
+	public String provideMissingRouteColor(@NotNull GRoute gRoute) {
+		// https://www.orleansexpress.com/fr/carte-du-reseau/
+		//noinspection deprecation
+		switch (gRoute.getRouteId()) {
+		case "1": // Montréal - Quebec (Express)
+			return "1E51A4";
+		case "2": // Service aéroport Trudeau
+			return "4E76BA";
+		case "3": // Bas-Saint-Laurent
+			return "F04E5E";
+		case "4": // Gaspésie (Sud)
+			return "3BA9BF";
+		case "5": // Gaspésie (Nord)
+			return "69BD45";
+		case "6": // Montréal - Québec (Mauricie)
+			return "F89843";
+		case "7": // Centre-du-Québec // Drummondville - Victoriaville
+			return "DB32Bf";
+		case "53": // Montréal - Ottawa
+			return "8224E3";
 		}
-		return super.getRouteColor(gRoute, agency);
+		return super.provideMissingRouteColor(gRoute);
 	}
 
 	@Override
